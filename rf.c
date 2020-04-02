@@ -112,12 +112,16 @@ void address_write_tx (unsigned char ucAddr) {
 	reg_write(RF_CH, ucAddr);
 }
 
-void rf_send_byte(unsigned char ucByte) {
-	unsigned char ucByteToSend = ucByte;
-	reg_write(RF_CH, 0);
-	payload_write(&ucByteToSend, 1);
+void rf_CE_impulse (void) {
 	set_CE(1);
 	delay_us(20);
 	set_CE(0);
+}
+
+void rf_send_byte(unsigned char ucByte) {
+	unsigned char ucByteToSend = ucByte;
+	reg_write(RF_CH, 19);
+	payload_write(&ucByteToSend, 1);
+	rf_CE_impulse();
 }
 
