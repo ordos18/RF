@@ -8,8 +8,8 @@ int main (void){
 	rf_init_as_tx();
 	while(1) {
 		static unsigned char ucMsgCtr=0;
-		delay_ms(10);
 		rf_send_byte(ucMsgCtr++);
+		rf_wait_until_data_sent();
 		led_toggle();
 	}
 }

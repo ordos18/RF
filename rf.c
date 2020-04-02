@@ -9,7 +9,9 @@
 #define SPI_CS_bm	(1<<1)
 #define SPI_SS_bm	(1<<4)
 #define RF_CE_bm	(1<<0)
+#define RF_TX_DS_bm (1<<5)
 #define RF_CHANNEL_bm  0x0f
+
 
 SPI_Master_t rf_spi_master;
 
@@ -73,7 +75,7 @@ unsigned char status_bit_test(unsigned char ucBitPosition){
 	if ((ucStatus & ucBitMask) != 0) {
 		reg_write(STATUS_, ucBitMask); // clear bit
 		return 1;
-		} else{
+	} else{
 		return 0;
 	}
 }
@@ -123,5 +125,9 @@ void rf_send_byte(unsigned char ucByte) {
 	reg_write(RF_CH, 19);
 	payload_write(&ucByteToSend, 1);
 	rf_CE_impulse();
+}
+
+void rf_wait_until_data_sent(void) {
+	while( 1 != status_bit_test(5) ) {}
 }
 
