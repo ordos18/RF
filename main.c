@@ -1,5 +1,6 @@
 #include "avr_compiler.h"
 #include "led.h"
+#include <avr/sleep.h>
 
 #define BOOT_BTN_bm (1<<3)
 
@@ -15,12 +16,18 @@ int main (void){
 	PORTC.INTCTRL = PORT_INT0LVL_LO_gc;
 	PMIC.CTRL = PMIC_LOLVLEN_bm;
 	sei(); // global interrupts enabling
-	while(1) {}
+	set_sleep_mode(SLEEP_MODE_IDLE);
+	sleep_enable();
+	while(1) {
+		sleep_cpu();
+	};
 }
 /*
 current consumption (V_PROG): 
 	LED OFF:
-		1.37 mA
+		0.71 mA (52% compared to 1.37 mA)
 	LED ON:
-		1.60 mA
+		0.94 mA (59% compared to 1.60 mA)
+		
+Result: 0.66 mA less
 */
