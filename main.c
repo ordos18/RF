@@ -1,33 +1,39 @@
 #include "avr_compiler.h"
 #include "led.h"
+#include "rf.h"
+#include "port.h"
 #include <avr/sleep.h>
 
-#define BOOT_BTN_bm (1<<3)
+#define RF_IRQ_bm (1<<2)
+
+static unsigned char ucMsgCtr=0;
 
 ISR(PORTC_INT0_vect){ // interrupt service routine
+	rf_send_byte(ucMsgCtr++);
 	led_toggle();
+	//PORT_ClearInterruptFlags(&PORTC, RF_IRQ_bm);
+	rf_clear_int_flags();
 };
 
 int main (void){
 	led_init();
-	PORTC.DIRCLR = BOOT_BTN_bm;
-	PORTC.PIN3CTRL = PORT_OPC_PULLUP_gc | PORT_ISC_FALLING_gc;
-	PORTC.INT0MASK = BOOT_BTN_bm;
+	PORTC.DIRCLR = RF_IRQ_bm;
+	PORTC.PIN2CTRL = PORT_OPC_PULLUP_gc | PORT_ISC_FALLING_gc;
+	PORTC.INT0MASK = RF_IRQ_bm;
 	PORTC.INTCTRL = PORT_INT0LVL_LO_gc;
 	PMIC.CTRL = PMIC_LOLVLEN_bm;
 	sei(); // global interrupts enabling
+	rf_init_as_tx();
+	rf_send_byte(ucMsgCtr++);
 	set_sleep_mode(SLEEP_MODE_IDLE);
 	sleep_enable();
 	while(1) {
 		sleep_cpu();
-	};
+	}
 }
 /*
 current consumption (V_PROG): 
-	LED OFF:
-		0.71 mA (52% compared to 1.37 mA)
-	LED ON:
-		0.94 mA (59% compared to 1.60 mA)
+	4.88 mA (98% compared to 4.98 mA)
 		
-Result: 0.66 mA less
+Result: 0.1 mA less
 */
