@@ -1,31 +1,22 @@
 #include "avr_compiler.h"
 #include "led.h"
-#include "rf.h"
-#include "port.h"
 #include <avr/sleep.h>
 
-#define RF_IRQ_bm (1<<2)
+ISR(RTC_OVF_vect) { led_set(); }
+ISR(RTC_COMP_vect) {led_clear();}
 
-static unsigned char ucMsgCtr=0;
-
-ISR(PORTC_INT0_vect){ // interrupt service routine
-	rf_send_byte(ucMsgCtr++);
-	led_toggle();
-	//PORT_ClearInterruptFlags(&PORTC, RF_IRQ_bm);
-	rf_clear_int_flags();
-};
-
-int main (void){
+int main (void) {
 	led_init();
-	PORTC.DIRCLR = RF_IRQ_bm;
-	PORTC.PIN2CTRL = PORT_OPC_PULLUP_gc | PORT_ISC_FALLING_gc;
-	PORTC.INT0MASK = RF_IRQ_bm;
-	PORTC.INTCTRL = PORT_INT0LVL_LO_gc;
-	PMIC.CTRL = PMIC_LOLVLEN_bm;
-	sei(); // global interrupts enabling
-	rf_init_as_tx();
-	rf_send_byte(ucMsgCtr++);
-	set_sleep_mode(SLEEP_MODE_IDLE);
+	RTC.PER = 1000;
+	RTC.CNT = 0;
+	RTC.COMP = 50;
+	RTC.CTRL = RTC_PRESCALER_DIV1_gc;
+	RTC.INTCTRL = RTC_COMPINTLVL_LO_gc | RTC_OVFINTLVL_LO_gc;
+	CLK.RTCCTRL = CLK_RTCSRC_ULP_gc | CLK_RTCEN_bm;
+	PMIC.CTRL |= PMIC_LOLVLEN_bm;
+	
+	sei();
+	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 	sleep_enable();
 	while(1) {
 		sleep_cpu();
@@ -33,7 +24,13 @@ int main (void){
 }
 /*
 current consumption (V_PROG): 
-	4.88 mA (98% compared to 4.98 mA)
+!! POWER_SAVE used instead of POWER_DOWN
+
+uC:		~1 uA (0.074% compared to 1.35 mA)
+LED:	~230 uA
+AVG:	~12.5 uA
 		
-Result: 0.1 mA less
+Result: 1.35 mA less
+Typical capacity of CR2032 battery: 220 mAh
+Battery should last 17670 h (~2 years)
 */
