@@ -99,7 +99,7 @@ void rf_init_as_tx(void){
 	
 	set_CE(0);
 
-	reg_write(CONFIG,(1<<PWR_UP)|(1<<EN_CRC)); // |(1<<MASK_TX_DS)
+	reg_write(CONFIG,(1<<PWR_UP)|(1<<EN_CRC)|(1<<MASK_TX_DS));
 	reg_write(EN_AA,0);
 	reg_write(RF_SETUP,(1<<RF_DR));
 	
